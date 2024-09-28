@@ -86,11 +86,7 @@
                             <div>
                                 <p><strong>Rating</strong> </p>
                                 <p class="rating">
-                                  <span class="stars" :style="{
-  background: `linear-gradient(90deg, #ffb904 0, #ffb904 ${person.Rating * 100 / 5}%, #e4e4e4 ${person.Rating * 100 / 5}%, #e4e4e4 100%)`,
-  '-webkit-background-clip': 'text',
-  'color': 'transparent'
-}">
+                                  <span class="stars" :style="getStarStyle(person.Rating)">
   ★★★★★
 </span>
                                 </p>
@@ -177,6 +173,29 @@ export default {
       this.selectedFilter = option;
       this.isOpen = false; 
       this.filterByRatingOrDate();
+    },
+    getStarStyle(rating) {
+      let startColor;
+      // Choose start color based on rating
+      if (rating <= 1) {
+        startColor = '#ff0000'; // Red
+      } else if (rating <= 2) {
+        startColor = '#ff6f00'; // Orange
+      } else if (rating <= 3) {
+        startColor = '#ffb904'; // Orange-yellow
+      } else if (rating <= 4) {
+        startColor = '#ffe234'; // Almost yellow
+      } else {
+        startColor = '#ffff00'; // Full yellow
+      }
+
+      const percentage = (rating * 100) / 5; // Percentage for gradient fill
+
+      return {
+        background: `linear-gradient(90deg, ${startColor} 0%, ${startColor} ${percentage}%, #e4e4e4 ${percentage}%, #e4e4e4 100%)`,
+        '-webkit-background-clip': 'text',
+        'color': 'transparent',
+      };
     },
     handleClickOutside(event) {
       const dropdown = this.$refs.dropdown;
