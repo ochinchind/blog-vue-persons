@@ -45,7 +45,7 @@
 
             <div class="header" style="text-align: left; margin-top: 10rem;">
                 <div class="date">
-                    <div class="border-blue" >
+                    <div class="border-blue" style="box-shadow: 0px 0px 15px #5BB9CD;" >
                         13.09.2024
                     </div>
                 </div>
@@ -55,9 +55,16 @@
                 <div class="border-blue" style=" font-size: 2.5rem;">
                     {{selectedTopic}}
                 </div>
-                <div @click="filterByRatingOrDate" class="filter">
-                    <img width="20" height="20" src="https://img.icons8.com/ios-filled/50/filter--v1.png" alt="filter--v1"/>
-                    <span style="margin-left: 1rem;">{{filterItem}}</span> &#9660;
+                <div class="filter" @click="toggleDropdown"  ref="dropdown" style="position: relative;">
+                  <div class="dropdown-toggle" :class="{ open: isOpen }">
+                    <img width="20" height="20" src="https://img.icons8.com/ios-filled/50/filter--v1.png" alt="filter--v1" />
+                    <span style="margin-left: 1rem;">{{ selectedLabel }}</span> &#9660;
+                  </div>
+
+                  <ul v-if="isOpen" class="dropdown-menu">
+                    <li @click="selectFilter('rating')">Rating</li>
+                    <li @click="selectFilter('pubDate')">Publication Date</li>
+                  </ul>
                 </div>
                 <button @click="nextPage" :disabled="currentPage >= totalPages" style="color: white; cursor: pointer; border: none; background: none;">
                     <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/arrow.png" alt="arrow"/>
@@ -78,13 +85,21 @@
                             </div>
                             <div>
                                 <p><strong>Rating</strong> </p>
-                                <p class="rating">{{ stars(person.Rating) }}</p>
+                                <p class="rating">
+                                  <span class="stars" :style="{
+  background: `linear-gradient(90deg, #ffb904 0, #ffb904 ${person.Rating * 100 / 5}%, #e4e4e4 ${person.Rating * 100 / 5}%, #e4e4e4 100%)`,
+  '-webkit-background-clip': 'text',
+  'color': 'transparent'
+}">
+  ★★★★★
+</span>
+                                </p>
                             </div>
                             <img :src="person.Avatar" :alt="person.PersonName" width="50" height="50">
                         </div>
                         <p style="word-break: break-all;">{{ person.Commentary }}</p>
                         <div style="display: flex; justify-content: end;">
-                        <button class="like-button" @click="incrementStars(person)">LIKE ({{ person.Stars }})</button>
+                        <button class="like-button" @click="incrementStars(person)">LIKE</button>
                         </div>
                     </div>
                 </div>
@@ -113,8 +128,13 @@ export default {
       currentPage: 1,
       itemsPerPage: 4,
       sortByRating: true,
-      filterItem: 'Rating',
-      isModalOpen: false
+      isModalOpen: false,
+      isOpen: false,
+      selectedFilter: 'rating',
+      options: {
+        rating: 'Rating',
+        pubDate: 'Publication Date'
+      }
     };
   },
   computed: {
@@ -126,9 +146,16 @@ export default {
       const endIndex = startIndex + this.itemsPerPage;
       return this.filteredPersons.slice(startIndex, endIndex);
     },
+    selectedLabel() {
+      return this.options[this.selectedFilter];
+    }
   },
   mounted() {
     this.filteredPersons = this.persons.filter(person => person.Topic === 'IT');
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
     filterByRatingOrDate() {
@@ -142,6 +169,20 @@ export default {
 
       this.sortByRating = !this.sortByRating;
       this.currentPage = 1;
+    },
+    toggleDropdown() {
+      this.isOpen = !this.isOpen;
+    },
+    selectFilter(option) {
+      this.selectedFilter = option;
+      this.isOpen = false; 
+      this.filterByRatingOrDate();
+    },
+    handleClickOutside(event) {
+      const dropdown = this.$refs.dropdown;
+      if (dropdown && !dropdown.contains(event.target)) {
+        this.isOpen = false;
+      }
     },
     nextPage() {
       if (this.currentPage < this.totalPages) {
@@ -175,7 +216,7 @@ export default {
       return '⭐'.repeat(fullStars) + (halfStar ? '⭐½' : '') + '☆'.repeat(emptyStars);
     },
     incrementStars(person) {
-      person.Stars += 1; // Increment the Stars count for the specific person
+        person.Rating += 0.1;
     },
   }
 }
@@ -213,6 +254,50 @@ body {
     cursor: pointer;
     padding: 0rem 1rem;
 }
+
+.dropdown-toggle {
+  background: #EEFCF7;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #a6e168;
+  padding: 0rem 1rem;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.dropdown-toggle.open {
+  background-color: #d1f2eb; 
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 3rem; 
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  width: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-menu li {
+  padding: 1rem;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #555;
+  cursor: pointer;
+  background-color: #EEFCF7;
+}
+
+.dropdown-menu li:hover {
+  background-color: #d1f2eb;
+  color: #333;
+}
 .reviews {
     display: flex;
     flex-wrap: wrap;
@@ -241,6 +326,19 @@ body {
 }
 .rating {
     color: #ffcc00;
+}
+.stars {
+  font-size: 1.5em;
+    letter-spacing: 6px;
+    background: -webkit-gradient(linear, left top, right top, color-stop(0, #ffb904), color-stop(55%, #ffb904), color-stop(0, #e4e4e4), to(#e4e4e4));
+    background: linear-gradient(90deg, #ffb904 0, #ffb904 55%, #e4e4e4 0, #e4e4e4 100%);
+    -webkit-background-clip: text;
+    color: transparent;
+    line-height: 1;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .like-button {
     background-color: #a6e168;
