@@ -66,6 +66,13 @@
                     <li @click="selectFilter('pubDate')">Publication Date</li>
                   </ul>
                 </div>
+                <button @click="previousPage" :disabled="currentPage === 1" style="color: white; cursor: pointer; border: none; background: none;">
+                  <img style="  transform: rotate(180deg);
+    transition: transform 0.5s ease;" width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/arrow-pointing-left.png" alt="back-arrow" />
+                  <div>
+                      {{ currentPage }} / {{ totalPages }}
+                  </div>
+              </button>
                 <button @click="nextPage" :disabled="currentPage >= totalPages" style="color: white; cursor: pointer; border: none; background: none;">
                     <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/arrow.png" alt="arrow"/>
                     <div>
@@ -155,16 +162,18 @@ export default {
   },
   methods: {
     filterByRatingOrDate() {
-      if (this.sortByRating) {
+      if (this.selectedFilter == 'pubDate') {
         this.filteredPersons = _.orderBy(this.persons, ['PubDate'], ['desc']);
-        this.filterItem = 'PubDate';
+        
       } else {
         this.filteredPersons = _.orderBy(this.persons, ['Rating'], ['desc']);
-        this.filterItem = 'Rating';
       }
 
-      this.sortByRating = !this.sortByRating;
-      this.currentPage = 1;
+    },
+        previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+        }
     },
     toggleDropdown() {
       this.isOpen = !this.isOpen;
@@ -172,11 +181,11 @@ export default {
     selectFilter(option) {
       this.selectedFilter = option;
       this.isOpen = false; 
+      this.currentPage = 1;
       this.filterByRatingOrDate();
     },
     getStarStyle(rating) {
       let startColor;
-      // Choose start color based on rating
       if (rating <= 1) {
         startColor = '#ff0000'; // Red
       } else if (rating <= 2) {
@@ -189,7 +198,7 @@ export default {
         startColor = '#ffff00'; // Full yellow
       }
 
-      const percentage = (rating * 100) / 5; // Percentage for gradient fill
+      const percentage = (rating * 100) / 5; 
 
       return {
         background: `linear-gradient(90deg, ${startColor} 0%, ${startColor} ${percentage}%, #e4e4e4 ${percentage}%, #e4e4e4 100%)`,
@@ -235,7 +244,11 @@ export default {
       return '⭐'.repeat(fullStars) + (halfStar ? '⭐½' : '') + '☆'.repeat(emptyStars);
     },
     incrementStars(person) {
+      if(person.Rating < 4.9) {
         person.Rating += 0.1;
+
+            this.filterByRatingOrDate();
+      }
     },
   }
 }
